@@ -10,6 +10,10 @@ This is a simple Android app that allows users to selected location and show cur
 * Retrofit
 * Coil
 
+## Features
+* Select Custom Location.
+* Show Today Weather Info.
+* Show 5 day Weather forecast data
 
 ## screenshots
 
