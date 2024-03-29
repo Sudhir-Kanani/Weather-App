@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.LocationManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
+
 
 @HiltViewModel
 class MapViewViewModel @Inject constructor() : ViewModel() {
@@ -39,6 +41,7 @@ class MapViewViewModel @Inject constructor() : ViewModel() {
         val isGPSEnabled = locationManager.isProviderEnabled("gps")
         if (!isGPSEnabled) {
             Log.d("GPS", "GPS DieEnabled")
+            return
         }
 
         if (ActivityCompat.checkSelfPermission(

@@ -1,8 +1,14 @@
 package com.sk.weatherApp.screens.main
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,6 +28,9 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -32,14 +41,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.sk.weatherApp.screens.main.mapView.viewModel.MapViewViewModel
 import com.sk.weatherApp.screens.main.mapView.ui.MapViewScreen
+import com.sk.weatherApp.screens.main.mapView.viewModel.MapViewViewModel
 import com.sk.weatherApp.screens.main.weatherInfo.ui.WeatherInfoScreen
 import com.sk.weatherApp.ui.theme.Weather_AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +60,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    val storagePermission = Manifest.permission.ACCESS_COARSE_LOCATION
+                    val locationManager: LocationManager =
+                        getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
                     val permission = listOf(
                         Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -59,19 +70,71 @@ class MainActivity : ComponentActivity() {
 
                     val permissionLauncher = rememberLauncherForActivityResult(
                         ActivityResultContracts.RequestMultiplePermissions()
-                    ) {
+                    ) {}
 
+                    val locationPermission =
+                        rememberMultiplePermissionsState(permissions = permission)
+
+                    var gpsPermission by remember {
+                        mutableStateOf(false)
                     }
 
-                    val externalStoragePermission = rememberMultiplePermissionsState(permissions = permission)
+                    val gpsPermissionForResultLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.StartActivityForResult()
+                    ) {
+                        val isGPSEnabled = locationManager.isProviderEnabled("gps")
+                        if (isGPSEnabled) {
+                            gpsPermission = true
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Please Enable Gps Location First and re-try !!",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            finish()
+                        }
+                    }
+
+                    val locationPermissionForResultLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.StartActivityForResult()
+                    ) {}
 
 
-                    if (externalStoragePermission.allPermissionsGranted) {
-                        Log.d("Permision","Ganted")
+                    if (locationPermission.allPermissionsGranted) {
+                        Log.d("Permission", "Ganted")
+
+                        val isGPSEnabled = locationManager.isProviderEnabled("gps")
+
+                        if (!isGPSEnabled) {
+                            Log.d("GPS", "GPS DieEnabled")
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            SideEffect {
+                                gpsPermissionForResultLauncher.launch(intent)
+                            }
+                        } else {
+                            gpsPermission = true
+                        }
                         // Permissions granted, proceed with your UI
-                        ChooseLocation()
 
-                    } else if (externalStoragePermission.shouldShowRationale) {
+                    } else if (locationPermission.shouldShowRationale) {
+
+                        Log.d("Permission", "shouldShowRationale")
+
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        val uri = Uri.fromParts(
+                            "package",
+                            packageName, null
+                        )
+                        intent.setData(uri)
+                        SideEffect {
+                            locationPermissionForResultLauncher.launch(intent)
+                        }
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Location Permission need to show your location  !!",
+                            Toast.LENGTH_LONG
+                        ).show()
                         // Show rationale or explanation to the user
                     } else {
                         SideEffect {
@@ -80,6 +143,10 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+
+                    if (gpsPermission) {
+                        ChooseLocation()
+                    }
                 }
             }
         }

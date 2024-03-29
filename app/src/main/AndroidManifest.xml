@@ -20,7 +20,6 @@
         <activity
             android:name=".screens.splash.SplashActivity"
             android:exported="true"
-            android:label="@string/title_activity_splash"
             android:theme="@style/Theme.Weather_App">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
