@@ -5,7 +5,7 @@ This is a simple Android app that allows users to selected location and show cur
 * MVVM architecture
 * Jatpack Compose
 * Nativation Compose
-* Dagger Hilt
+* Dependency Injection - Hilt
 * Kotlin Coroutines 
 * Retrofit
 * Coil
